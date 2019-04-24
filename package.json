@@ -1,0 +1,27 @@
+{
+  "name": "peelr",
+  "version": "0.0.0",
+  "scripts": {
+    "test": "mocha --require esm --file tests/init.js --recursive 'tests/**/*.test.js'",
+    "lint": "eslint index.js src tests"
+  },
+  "description": "Web scraping library for nodejs",
+  "repository": {
+    "url": "https://github.com/njoyard/peelr.git",
+    "type": "git"
+  },
+  "main": "index.js",
+  "author": "Nicolas Joyard <nicolas-npm@njoyard.fr>",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "esm": "^3.2.22",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.7"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^5.16.0",
+    "mocha": "^6.1.4"
+  }
+}
