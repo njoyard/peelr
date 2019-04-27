@@ -6,16 +6,18 @@ export default class PeelrList extends PeelrValue {
     this.list = list;
   }
 
-  async getValue($selection, $) {
+  async getValue($selection, ctx) {
     let { list } = this;
+    let $ = await ctx.cheerio();
 
     return await Promise.all(
       list.map(
         async val =>
           await val.transform(
             val.selector === "::root"
-              ? await val.getValue($selection, $)
-              : await val.getValue($(val.selector, $selection), $)
+              ? await val.getValue($selection, ctx)
+              : await val.getValue($(val.selector, $selection), ctx),
+            ctx
           )
       )
     );

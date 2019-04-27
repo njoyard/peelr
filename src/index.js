@@ -1,6 +1,7 @@
 import PeelrCustom from "./custom";
 import PeelrHash from "./hash";
 import PeelrList from "./list";
+import PeelrLink from "./link";
 import {
   PeelrAttr,
   PeelrData,
@@ -35,6 +36,7 @@ export default exportCtors([
   PeelrHash,
   PeelrHtml,
   PeelrIs,
+  PeelrLink,
   PeelrList,
   PeelrText,
   PeelrVal

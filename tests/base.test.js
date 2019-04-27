@@ -1,5 +1,6 @@
 import { assert } from "chai";
 
+import Peelr from "../src";
 import PeelrValue from "../src/base";
 
 let html = `
@@ -69,8 +70,44 @@ describe("PeelrValue", function() {
       return $el.text();
     };
     assert.equal(
-      await val.extract({ url: "http://localhost:8000" }),
+      await val.extract({ uri: "http://localhost:8000" }),
       "h1 text content"
     );
+  });
+
+  it("extracts paginated values with nextPage extractor", async function() {
+    let val = new PeelrValue(".item", {
+      multiple: true,
+      nextPage: Peelr.attr(".next", "href")
+    });
+    val.getValue = function($el) {
+      return $el.text();
+    };
+    assert.deepEqual(await val.extract("http://localhost:8000/page1"), [
+      "item 1",
+      "item 2",
+      "item 3",
+      "item 4",
+      "item 5",
+      "item 6"
+    ]);
+  });
+
+  it("extracts paginated values with nextPage selector", async function() {
+    let val = new PeelrValue(".item", {
+      multiple: true,
+      nextPage: ".next"
+    });
+    val.getValue = function($el) {
+      return $el.text();
+    };
+    assert.deepEqual(await val.extract("http://localhost:8000/page1"), [
+      "item 1",
+      "item 2",
+      "item 3",
+      "item 4",
+      "item 5",
+      "item 6"
+    ]);
   });
 });

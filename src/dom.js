@@ -22,6 +22,9 @@ class PeelrAttr extends PeelrValue {
   }
 }
 
+// Pass PeelrAttr to PeelrValue for pagination
+PeelrValue.PeelrAttr = PeelrAttr;
+
 class PeelrData extends PeelrValue {
   constructor(selector, data, options = {}) {
     super(selector, options);

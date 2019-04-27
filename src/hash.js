@@ -39,14 +39,16 @@ function parseHash(hash, path = []) {
 
 export default class PeelrHash extends PeelrList {
   constructor(selector, hash, options = {}) {
+    options = Object.assign({ transform: x => x }, options);
+
     let { values, constants } = parseHash(hash);
-    let callerTransform = options.transform || (x => x);
+    let { transform: callerTransform } = options;
 
     super(
       selector,
       values.map(v => v.value),
-      Object.assign({}, options, {
-        async transform(results) {
+      Object.assign(options, {
+        async transform(results, ctx) {
           let output = {};
 
           for (let i = 0; i < results.length; i++) {
@@ -57,7 +59,7 @@ export default class PeelrHash extends PeelrList {
             setDeep(output, constants[i].path, constants[i].value);
           }
 
-          return await callerTransform(output);
+          return await callerTransform(output, ctx);
         }
       })
     );
