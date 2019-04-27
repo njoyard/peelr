@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.1 (2019-04-28)
+
+* Fixed main module not exporting the right thing
+
 ## v0.2.0 (2019-04-27)
 
 * Added a context object to track URLs and keep cookies between requests

@@ -10,6 +10,12 @@
     "url": "https://github.com/njoyard/peelr.git",
     "type": "git"
   },
+  "keywords": [
+    "selector",
+    "scraper",
+    "parser",
+    "html"
+  ],
   "main": "index.js",
   "author": "Nicolas Joyard <nicolas-npm@njoyard.fr>",
   "license": "MIT",
