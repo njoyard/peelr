@@ -2,7 +2,7 @@
   "name": "peelr",
   "version": "0.3.0",
   "scripts": {
-    "test": "nyc --reporter lcov mocha --require esm --file tests/init.js --recursive 'tests/**/*.test.js'",
+    "test": "nyc --exclude 'tests/**' --reporter lcov mocha --require esm --file tests/init.js --recursive 'tests/**/*.test.js'",
     "lint": "eslint index.js src tests"
   },
   "description": "Web scraping library for nodejs",
