@@ -1,8 +1,8 @@
-import PeelrCustom from "./custom";
-import PeelrForm from "./form";
-import PeelrHash from "./hash";
-import PeelrList from "./list";
-import PeelrLink from "./link";
+import PeelrCustom from "./extractors/custom";
+import PeelrForm from "./extractors/form";
+import PeelrHash from "./extractors/hash";
+import PeelrList from "./extractors/list";
+import PeelrLink from "./extractors/link";
 import {
   PeelrAttr,
   PeelrData,
@@ -11,7 +11,7 @@ import {
   PeelrIs,
   PeelrText,
   PeelrVal
-} from "./dom";
+} from "./extractors/dom";
 
 function exportCtors(ctors) {
   return ctors.reduce((obj, Ctor) => {

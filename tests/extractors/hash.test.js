@@ -1,6 +1,6 @@
 import { assert } from "chai";
 
-import Peelr from "../src";
+import Peelr from "../../src";
 
 describe("Peelr.hash", function() {
   let html = `

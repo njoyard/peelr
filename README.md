@@ -6,6 +6,8 @@
 Peelr is a versatile web data extraction (or scraping) library for NodeJS.
 
 ```js
+const Peelr = require('peelr');
+
 await Peelr.hash(
   'article.fhitem-story',
   {

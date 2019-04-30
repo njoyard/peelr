@@ -1,4 +1,4 @@
-import PeelrValue from "./base/value";
+import PeelrValue from "../base/value";
 
 class PeelrText extends PeelrValue {
   constructor(selector, options = {}) {

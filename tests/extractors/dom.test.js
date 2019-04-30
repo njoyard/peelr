@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import cheerio from "cheerio";
 
-import Peelr from "../src";
+import Peelr from "../../src";
 
 function domTest({ title, subject, html, args, expected }) {
   let transform =

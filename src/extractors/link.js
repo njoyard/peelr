@@ -1,4 +1,4 @@
-import PeelrNav from "./base/nav";
+import PeelrNav from "../base/nav";
 
 export default class PeelrLink extends PeelrNav {
   constructor(selector, extractor, options = {}) {

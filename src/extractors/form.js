@@ -1,4 +1,4 @@
-import PeelrNav from "./base/nav";
+import PeelrNav from "../base/nav";
 
 const MULTIPART = "multipart/form-data";
 const URLENCODED = "application/x-www-form-urlencoded";

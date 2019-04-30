@@ -1,4 +1,4 @@
-import PeelrValue from "./base/value";
+import PeelrValue from "../base/value";
 
 export default class PeelrCustom extends PeelrValue {
   constructor(selector, getter, options = {}) {

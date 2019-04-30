@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import request from "request-promise-native";
 
-import Peelr from "../src";
+import Peelr from "../../src";
 
 describe("Peelr.link", function() {
   it("extracts from href attribute", async function() {
