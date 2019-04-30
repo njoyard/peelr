@@ -27,8 +27,6 @@ nutshell it describes the following tasks, in order:
 * Extracting simple values from HTML snippets
 * Building more complex values using simple extractors
 * Combining data from multiple pages
-* Defining a full data model to extract data from a website (or multiple
-  interlinked websites)
 
 ## Peelr extractors
 
@@ -300,7 +298,7 @@ await Peelr.hash(
 > extractors nor POJOs, as this will mess up the hash parsing stage.  If you
 > need those, use a transform function to add them after extraction.
 
-## Extracting data from multiple pages
+## Extracting data from multiple webpages
 
 ### Following links
 
@@ -325,14 +323,36 @@ await Peelr.link('link', Peelr.text('h1'), { attr: 'src' })
 ```
 
 If you need to alter the URL or build yourself, you can pass a (possibly async)
-`buildURL` function as an option:
+`buildRequest` function as an option, that should return a URL or a parameters
+object for [requests][rqst].
 
 ```js
 await Peelr.link('.item', Peelr.text('h1'), {
   attr: 'id',
-  buildURL: (id) => `https://example.com/item/${id}`
+  buildRequest: (id) => `https://example.com/item/${id}`
 }).extract(`<div class="item" id="2"/>`);
 ```
+
+### Submitting forms
+
+Similarly, `Peelr.form` can be used to submit a form and extract data from the
+target page:
+
+```js
+await Peelr.link('form.login', Peelr.text('h1'), {
+  fields: {
+    '[name="user"]': "john",
+    '[name="password"]': "hunter3"
+    '[name="rememberme"]': true
+  }
+}).extract("https://example.com/login");
+// "Welcome, john"
+```
+
+There is no input type detection or validation when submitting forms.  Passing
+a boolean value will set or unset the `checked` attribute on the corresponding
+field, and passing any other value type will set the value.  And of course, if
+the HTML markup specifies any javascript submit handler, it will *not* be run.
 
 ### Extracting paginated data
 
@@ -361,25 +381,288 @@ For more complex cases, you can also use an extractor as `nextPage`:
 ```js
 await Peelr.text('.item', {
   multiple: true,
-  nextPage: Peeler.attr('link[rel=next]', 'src')
+  nextPage: Peelr.attr('link[rel=next]', 'src')
 }).extract(/* ... */);
 ```
 
-### Caveat: relative URLs
+### Specific considerations when extracting from multiple webpages
+
+When you make a `.extract()` call, Peelr instanciates a context object to help
+make HTTP requests.  This context object is mainly useful when following links
+with `Peelr.link` or extracting paginated data with the `nextPage` option, as
+it will keep track of a few things across requests made from the same
+`.extract()` call.
+
+* Headers: some HTTP headers can be kept across requests
+* Cookies: the same cookie jar is used for all requests
+* Auth: the same authentication parameters are used for all requests
+* Cache: the context ensures identical GET requests are made only once
+* Base URL: used to resolve relative URLs
+
+#### Passing headers and other request options
+
+Wherever Peelr expects a URL, it also accepts an object with parameters for
+[request][rqst].  This includes the `.extract()` method, the `buildURL` option
+return value for `Peelr.link` and the `nextPage` option return value.  So let's
+say we have a URL that only returns HTML when called with a `text/html` accept
+header and returns JSON otherwise, you could do:
+
+```js
+await Peelr.text('h1').extract({
+  uri: 'http://example.com/jsonbydefault',
+  headers: {
+    'Accept': 'text/html'
+  }
+});
+
+await Peelr.link('a', Peelr.text('h1'), {
+  buildURL: (url) => { return {
+    uri: url,
+    headers: {
+      'Accept': 'text/html'
+    }
+  }}
+}).extract(`<a href="http://example.com/jsonbydefault">`);
+
+await Peelr.text('.item', {
+  multiple: true,
+  nextPage: Peelr.attr('.next', 'href', {
+    transform: (url) => { return {
+      uri: url,
+      headers: {
+        'Accept': 'text/html'
+      }
+    }}
+  })
+}).extract({
+  url: "http://example.com/jsonitems",
+  headers: {
+    'Accept': 'text/html'
+  }
+});
+```
+
+However, it can be pretty tedious if you're building a complex extractor and you
+have to repeat the same headers all the time, as in the last example above.  To
+avoid that, you can pass a `keepHeaders` option so that Peelr will reuse the
+same headers on all derived requests.  The value for this option can either be
+a list of header names to keep, or `true` to keep them all:
+
+```js
+await Peelr.text('.item', {
+  multiple: true,
+  nextPage: Peelr.attr('.next', 'href')
+}).extract({
+  url: "http://example.com/jsonitems",
+  headers: {
+    'Accept': 'text/html'
+  },
+  keepHeaders: ['Accept']
+});
+```
+
+Headers can still be overriden for a specific query by returning them from a
+`buildURL` or `nextPage` option if neeeded.
+
+#### Cookies and authentication
+
+There is no builtin mechanism in Peelr to handle authentication, however you can
+use the [`auth`][rqst-auth] and [`oauth`][rqst-oauth] parameters for request.
+Those parameters will be forwarded by the context to derived requests in a given
+`.extract()` call.  If you want to remove or change those for a certain request,
+you can return them from the `buildURL` or `nextPage` options (set them to
+`null` to remove them).
+
+Similarly, Peelr context ensures all derived requests use the same cookie jar.
+If you don't pass a `jar` parameter to the initial `.extract()` call, it will
+create an empty one.  This means you can handle authentication yourself prior
+to calling Peelr, and then reuse the same cookie jar.  Here is a quick example
+with a login form:
+
+
+```js
+const request = require('request-promise-native');
+const cookieJar = request.jar()
+
+await request.post({
+  uri: 'https://example.com/login',
+  jar: cookieJar,
+  form: { login: 'john', password: 'hunter3' }
+});
+
+let result = await extractor.extract({
+  uri: 'https://example.com/data',
+  jar: cookieJar
+});
+```
+
+#### Duplicate requests
+
+Peelr will cache responses for all GET requests made with the same URL and the
+same set of headers, derived from a single `.extract()` call.  This means the
+following code will only make 1 request:
+
+```js
+await Peelr.hash('.item', {
+  title: Peelr.link('a.details', Peelr.text('.title')),
+  price: Peelr.link('a.details', Peelr.text('.price'))
+}).extract(`
+  <div class="item">
+    <a href="https://example.com/details" class="details">details</a>
+  </div>
+`);
+```
+
+Keep in mind that the cache is scoped to a `.extract()` call, so using that
+extractor again would make a new request.
+
+#### Caveat: relative URLs
 
 Peelr resolves relative URLs in the following situations, and will throw an
 error otherwise:
 
 * When the markup contains a `<base>` tag with an absolute `href` attribute;
 * When the markup contains a `<base>` tag with a relative `href` attribute and a
-  URL was passed to the `extract` call;
-* When no `<base>` tag is present but a URL was passed to the `extract` method.
+  URL was passed to the `.extract()` call;
+* When no `<base>` tag is present but a URL was passed to the `.extract()` call.
 
-If you're passing HTML to the `extract` method and want to follow relative
+If you're passing HTML to the `.extract()` method and want to follow relative
 links, you have to either include a `<base>` tag in the markup with an absolute
 `href`, or transform URLs from relative to absolute yourself (using the
 `buildURL` option with `Peelr.link`, or using the `transform` option on the
-`nextPage` extractor for paginated data).
+`nextPage` extractor for paginated data):
+
+```js
+await Peelr.link('a', Peelr.text('h1'), {
+  buildURL: (url) => `https://example.com${url}`
+}).extract(`<a href="/path/to/page">link</a>`);
+
+await Peelr.text('.item', {
+  multiple: true,
+  nextPage: Peelr.attr('.next', 'href', {
+    transform: (url) => `https://example.com${url}`
+  })
+}).extract(`
+  <section>
+    <div class="item">item 1</div>
+    <div class="item">item 2</div>
+    <div class="item">item 3</div>
+  </section>
+  <nav>
+    <a class="next" href="/items?page=2">next page</a>
+  </nav>
+`);
+```
+
+### A complete example
+
+The following example will submit a login form, then extract paginated items
+from a list on the page reached after submission, and populate each item with
+details from a linked page.
+
+Let's say `http://example.com/login` has the following markup:
+
+```html
+<form class="login-form" method="POST" action="/login">
+  <input type="text" name="user" />
+  <input type="password" name="password" />
+  <input type="submit" value="Log in" />
+</form>
+```
+
+Submitting the form lands us on `http://example.com/page1`, which is a listing
+page with the following markup:
+
+```html
+<div class="item">
+  <div class="label">Item 1</div>
+  <a class="details" href="/items/1">details</a>
+</div>
+<div class="item">
+  <div class="label">Item 2</div>
+  <a class="details" href="/items/2">details</a>
+</div>
+<a class="next-page" href="http://example.com/page2">next page</a>
+```
+
+`page2` has a similar markup, with other items and a link to the next page, and
+so on.
+
+Item detail pages have the following markup:
+
+```html
+<body>
+  <h1>Description</h1>
+  <div class="description">Item number one</div>
+  <h1>Price</h1>
+  <div class="price">
+    <span class="amount">15</span>
+    <span class="currency">€</span>
+  </div>
+</body>
+```
+
+The following extractor would extract everything from those pages:
+
+```js
+await Peelr.form(
+  '.login-form',
+  Peelr.hash(
+    '.item',
+    {
+      label: Peelr.text('.label'),
+      link: Peelr.attr('a.details', 'href'),
+      id: Peelr.attr('a.details', 'href', {
+        transform: (url) => Number(url.replace(/^\/page\//, ''))
+      }),
+      details: Peelr.link(
+        'a.details',
+        Peelr.hash(
+          'body',
+          {
+            description: Peelr.text('.description'),
+            price: Peelr.text('.price .amount', { transform: p => Number(p) })
+            currency: Peelr.text('.price .currency')
+          }
+        )
+      )
+    },
+    {
+      multiple: true,
+      nextPage: 'a.next-page'
+    }
+  ),
+  {
+    fields: {
+      '[name="user"]': "john",
+      '[name="password"]': "hunter3"
+    }
+  }
+).extract('https://example.com/login');
+```
+
+If we wanted to flatten hashes returned for each item (so that we no longer had
+a `details` sub-hash), we could use a transform function on the topmost
+`Peelr.hash` as follows:
+
+```js
+await Peelr.form(
+  '.login-form',
+  Peelr.hash(
+    // ...
+    {
+      multiple: true,
+      nextPage: 'a.next-page',
+      transform: (item) => {
+        Object.assign(item, item.details);
+        delete item.details;
+        return item;
+      }
+    }
+  )
+  // ...
+).extract(/* ... */);
+```
 
 ## Development
 
@@ -392,3 +675,5 @@ available, as it spawns a test web server listening on that port.
 
 [cheerio]: https://github.com/cheeriojs/cheerio
 [rqst]: https://github.com/request/request
+[rqst-auth]: https://github.com/request/request#http-authentication
+[rqst-oauth]: https://github.com/request/request#oauth-signing

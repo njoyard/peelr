@@ -8,6 +8,10 @@ export default class PeelrValue {
     this.nextPage = options.nextPage;
   }
 
+  async getValue() {
+    throw new Error("Not implemented");
+  }
+
   async extract(source) {
     let ctx = PeelrContext.create(source);
 

@@ -1,4 +1,5 @@
 import PeelrCustom from "./custom";
+import PeelrForm from "./form";
 import PeelrHash from "./hash";
 import PeelrList from "./list";
 import PeelrLink from "./link";
@@ -32,6 +33,7 @@ export default exportCtors([
   PeelrAttr,
   PeelrCustom,
   PeelrData,
+  PeelrForm,
   PeelrHasClass,
   PeelrHash,
   PeelrHtml,

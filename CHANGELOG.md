@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+* Fixed cookie jar passed to `extract` being overwritten
+* Use express for the test server
+* Added base PeelrNav to reimplement link
+* Added form extractor implemented on PeelrNav
+
 ## v0.2.1 (2019-04-28)
 
 * Fixed main module not exporting the right thing

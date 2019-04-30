@@ -1,7 +1,7 @@
 import { assert } from "chai";
 
-import Peelr from "../src";
-import PeelrValue from "../src/base";
+import Peelr from "../../src";
+import PeelrValue from "../../src/base/value";
 
 let html = `
   <p>
@@ -65,20 +65,23 @@ describe("PeelrValue", function() {
   });
 
   it("extracts from request parameters", async function() {
-    let val = new PeelrValue("h1");
+    let val = new PeelrValue(".header#x-my-header");
     val.getValue = function($el) {
       return $el.text();
     };
     assert.equal(
-      await val.extract({ uri: "http://localhost:8000" }),
-      "h1 text content"
+      await val.extract({
+        uri: "http://localhost:8000/dump",
+        headers: { "X-My-Header": "myvalue" }
+      }),
+      "myvalue"
     );
   });
 
-  it("extracts paginated values with nextPage extractor", async function() {
+  it("extracts paginated values with nextPage selector", async function() {
     let val = new PeelrValue(".item", {
       multiple: true,
-      nextPage: Peelr.attr(".next", "href")
+      nextPage: ".next"
     });
     val.getValue = function($el) {
       return $el.text();
@@ -93,10 +96,10 @@ describe("PeelrValue", function() {
     ]);
   });
 
-  it("extracts paginated values with nextPage selector", async function() {
+  it("extracts paginated values with nextPage extractor", async function() {
     let val = new PeelrValue(".item", {
       multiple: true,
-      nextPage: ".next"
+      nextPage: Peelr.attr(".next", "href")
     });
     val.getValue = function($el) {
       return $el.text();

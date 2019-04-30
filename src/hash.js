@@ -1,4 +1,4 @@
-import PeelrValue from "./base";
+import PeelrValue from "./base/value";
 import PeelrList from "./list";
 
 function setDeep(target, propertyPath, value) {

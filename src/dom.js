@@ -1,4 +1,4 @@
-import PeelrValue from "./base";
+import PeelrValue from "./base/value";
 
 class PeelrText extends PeelrValue {
   constructor(selector, options = {}) {
@@ -21,9 +21,6 @@ class PeelrAttr extends PeelrValue {
     return $selection.attr(attr);
   }
 }
-
-// Pass PeelrAttr to PeelrValue for pagination
-PeelrValue.PeelrAttr = PeelrAttr;
 
 class PeelrData extends PeelrValue {
   constructor(selector, data, options = {}) {
@@ -72,6 +69,9 @@ class PeelrHtml extends PeelrValue {
     return $selection.html();
   }
 }
+
+// Pass PeelrAttr to PeelrValue for pagination
+PeelrValue.PeelrAttr = PeelrAttr;
 
 export {
   PeelrAttr,

@@ -1,26 +1,15 @@
-import { PeelrAttr } from "./dom";
+import PeelrNav from "./base/nav";
 
-export default class PeelrLink extends PeelrAttr {
+export default class PeelrLink extends PeelrNav {
   constructor(selector, extractor, options = {}) {
-    options = Object.assign(
-      { transform: x => x, attr: "href", buildURL: x => x },
-      options
-    );
+    super(selector, extractor, options);
 
-    let { attr, buildURL, transform: callerTransform } = options;
+    this.attr = options.attr || "href";
+  }
 
-    super(
-      selector,
-      attr,
-      Object.assign(options, {
-        async transform(url, ctx) {
-          let finalURL = await buildURL(url);
-          let derivedCtx = await ctx.derive(finalURL);
-          let value = await extractor.extract(derivedCtx);
+  async getRequestParams($selection) {
+    let { attr } = this;
 
-          return await callerTransform(value, ctx);
-        }
-      })
-    );
+    return $selection.attr(attr);
   }
 }
