@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.3.0 (2019-04-30)
 
 * Fixed cookie jar passed to `extract` being overwritten
 * Use express for the test server
