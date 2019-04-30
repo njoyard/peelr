@@ -1,6 +1,6 @@
 {
   "name": "peelr",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "scripts": {
     "test": "mocha --require esm --file tests/init.js --recursive 'tests/**/*.test.js'",
     "lint": "eslint index.js src tests"
