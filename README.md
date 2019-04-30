@@ -1,6 +1,7 @@
 # Peelr
 
 [![CircleCI](https://circleci.com/gh/njoyard/peelr.svg?style=svg)](https://circleci.com/gh/njoyard/peelr)
+[![Coverage Status](https://coveralls.io/repos/github/njoyard/peelr/badge.svg?branch=master)](https://coveralls.io/github/njoyard/peelr?branch=master)
 [![NPM](https://img.shields.io/npm/v/peelr.svg)](https://www.npmjs.com/package/peelr)
 
 Peelr is a versatile web data extraction (or scraping) library for NodeJS.
