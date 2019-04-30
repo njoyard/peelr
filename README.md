@@ -402,27 +402,27 @@ it will keep track of a few things across requests made from the same
 #### Passing headers and other request options
 
 Wherever Peelr expects a URL, it also accepts an object with parameters for
-[request][rqst].  This includes the `.extract()` method, the `buildURL` option
-return value for `Peelr.link` and the `nextPage` option return value.  So let's
-say we have a URL that only returns HTML when called with a `text/html` accept
-header and returns JSON otherwise, you could do:
+[request][rqst].  This includes the `.extract()` method, the `buildRequest`
+option return value for `Peelr.link` and the `nextPage` option return value.  So
+let's say we have a URL that only returns HTML when called with a `text/html`
+accept header and returns JSON otherwise, you could do:
 
 ```js
 await Peelr.text('h1').extract({
-  uri: 'http://example.com/jsonbydefault',
+  uri: 'https://example.com/jsonbydefault',
   headers: {
     'Accept': 'text/html'
   }
 });
 
 await Peelr.link('a', Peelr.text('h1'), {
-  buildURL: (url) => { return {
+  buildRequest: (url) => { return {
     uri: url,
     headers: {
       'Accept': 'text/html'
     }
   }}
-}).extract(`<a href="http://example.com/jsonbydefault">`);
+}).extract(`<a href="https://example.com/jsonbydefault">`);
 
 await Peelr.text('.item', {
   multiple: true,
@@ -435,7 +435,7 @@ await Peelr.text('.item', {
     }}
   })
 }).extract({
-  url: "http://example.com/jsonitems",
+  url: "https://example.com/jsonitems",
   headers: {
     'Accept': 'text/html'
   }
@@ -453,7 +453,7 @@ await Peelr.text('.item', {
   multiple: true,
   nextPage: Peelr.attr('.next', 'href')
 }).extract({
-  url: "http://example.com/jsonitems",
+  url: "https://example.com/jsonitems",
   headers: {
     'Accept': 'text/html'
   },
@@ -462,7 +462,7 @@ await Peelr.text('.item', {
 ```
 
 Headers can still be overriden for a specific query by returning them from a
-`buildURL` or `nextPage` option if neeeded.
+`buildRequest` or `nextPage` option if neeeded.
 
 #### Cookies and authentication
 
@@ -470,7 +470,7 @@ There is no builtin mechanism in Peelr to handle authentication, however you can
 use the [`auth`][rqst-auth] and [`oauth`][rqst-oauth] parameters for request.
 Those parameters will be forwarded by the context to derived requests in a given
 `.extract()` call.  If you want to remove or change those for a certain request,
-you can return them from the `buildURL` or `nextPage` options (set them to
+you can return them from the `buildRequest` or `nextPage` options (set them to
 `null` to remove them).
 
 Similarly, Peelr context ensures all derived requests use the same cookie jar.
@@ -529,12 +529,12 @@ error otherwise:
 If you're passing HTML to the `.extract()` method and want to follow relative
 links, you have to either include a `<base>` tag in the markup with an absolute
 `href`, or transform URLs from relative to absolute yourself (using the
-`buildURL` option with `Peelr.link`, or using the `transform` option on the
+`buildRequest` option with `Peelr.link`, or using the `transform` option on the
 `nextPage` extractor for paginated data):
 
 ```js
 await Peelr.link('a', Peelr.text('h1'), {
-  buildURL: (url) => `https://example.com${url}`
+  buildRequest: (url) => `https://example.com${url}`
 }).extract(`<a href="/path/to/page">link</a>`);
 
 await Peelr.text('.item', {
@@ -560,7 +560,7 @@ The following example will submit a login form, then extract paginated items
 from a list on the page reached after submission, and populate each item with
 details from a linked page.
 
-Let's say `http://example.com/login` has the following markup:
+Let's say `https://example.com/login` has the following markup:
 
 ```html
 <form class="login-form" method="POST" action="/login">
@@ -570,7 +570,7 @@ Let's say `http://example.com/login` has the following markup:
 </form>
 ```
 
-Submitting the form lands us on `http://example.com/page1`, which is a listing
+Submitting the form lands us on `https://example.com/page1`, which is a listing
 page with the following markup:
 
 ```html
@@ -582,7 +582,7 @@ page with the following markup:
   <div class="label">Item 2</div>
   <a class="details" href="/items/2">details</a>
 </div>
-<a class="next-page" href="http://example.com/page2">next page</a>
+<a class="next-page" href="https://example.com/page2">next page</a>
 ```
 
 `page2` has a similar markup, with other items and a link to the next page, and
