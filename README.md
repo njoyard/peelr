@@ -5,17 +5,32 @@
 
 Peelr is a versatile web data extraction (or scraping) library for NodeJS.
 
+```js
+await Peelr.hash(
+  'article.fhitem-story',
+  {
+    title: Peelr.text('.story-title > a'),
+    link: Peelr.attr('.story-title > a', 'href'),
+    comments: Peelr.text('.comment-bubble a', { transform: n => Number(n) }),
+    time: Peelr.attr('.story-byline time', 'datetime'),
+    source: Peelr.attr('.story-sourcelnk', 'href'),
+    text: Peelr.html('.body .p', { transform: t => t.trim() }),
+    related: Peelr.link(
+      '.story-title > a',
+      Peelr.attr('#newa2footerv2 .c h3 a', 'href', { multiple: true })
+    )
+  },
+  { multiple: true }
+).extract('https://slashdot.org');
+```
+
 It uses [request][rqst] to make http requests and [cheerio][cheerio] to extract
 things from HTML.
 
-## Quickstart
+## Installation
 
 ```sh
 yarn add Peelr
-```
-
-```js
-const Peelr = require('Peelr');
 ```
 
 ## Introduction
