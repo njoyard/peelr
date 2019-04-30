@@ -2,7 +2,7 @@
   "name": "peelr",
   "version": "0.3.0",
   "scripts": {
-    "test": "mocha --require esm --file tests/init.js --recursive 'tests/**/*.test.js'",
+    "test": "nyc --reporter lcov mocha --require esm --file tests/init.js --recursive 'tests/**/*.test.js'",
     "lint": "eslint index.js src tests"
   },
   "description": "Web scraping library for nodejs",
@@ -28,8 +28,10 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "cookie-parser": "^1.4.4",
+    "coveralls": "^3.0.3",
     "eslint": "^5.16.0",
     "express": "^4.16.4",
-    "mocha": "^6.1.4"
+    "mocha": "^6.1.4",
+    "nyc": "^14.0.0"
   }
 }

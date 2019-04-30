@@ -53,6 +53,9 @@ jobs:
       - run:
           name: Run Tests
           command: yarn test
+      - run:
+          name: Report Coverage
+          command: cat coverage/lcov.info | ./node_modules/.bin/coveralls
 
 workflows:
   version: 2
