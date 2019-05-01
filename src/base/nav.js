@@ -8,10 +8,6 @@ export default class PeelrNav extends PeelrValue {
     this.extractor = extractor;
   }
 
-  async getRequestParams() {
-    throw new Error("Not implemented");
-  }
-
   async getValue($selection, ctx) {
     let { buildRequest, extractor } = this;
 

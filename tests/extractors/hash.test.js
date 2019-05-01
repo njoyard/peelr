@@ -56,11 +56,14 @@ describe("Peelr.hash", function() {
     assert.deepEqual(
       await Peelr.hash(".mycls", {
         field1: Peelr.text(".field1"),
-        deep: { field2: Peelr.attr(".field2", "foo") }
+        deep: {
+          field2: Peelr.attr(".field2", "foo"),
+          cls: Peelr.attr(".field2", "class")
+        }
       }).extract(html),
       {
         field1: "field 1 value",
-        deep: { field2: "field 2 value" }
+        deep: { field2: "field 2 value", cls: "field2" }
       }
     );
   });
