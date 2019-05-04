@@ -1,6 +1,6 @@
 {
   "name": "peelr",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "scripts": {
     "test": "nyc --exclude 'tests/**' --reporter lcov mocha --require esm --file tests/init.js --recursive 'tests/**/*.test.js'",
     "lint": "eslint index.js src tests"
