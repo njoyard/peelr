@@ -3,15 +3,33 @@ import PeelrContext from "./context";
 export default class PeelrValue {
   constructor(selector, options = {}) {
     this.selector = selector;
+
     this.transform = options.transform || (x => x);
+
     this.multiple = options.multiple || false;
     this.nextPage = options.nextPage;
+    this.offset = options.offset || 0;
+    this.limit = options.limit || Infinity;
+
+    this.onRequest = options.onRequest;
   }
 
   async extract(source) {
-    let ctx = PeelrContext.create(source);
+    let {
+      onRequest,
+      selector,
+      multiple,
+      nextPage,
+      offset,
+      limit,
+      transform
+    } = this;
 
-    let { selector, multiple, nextPage, transform } = this;
+    let ctx = PeelrContext.create(source);
+    if (onRequest) {
+      ctx.on("request", onRequest);
+    }
+
     let $ = await ctx.cheerio();
     let $target = $(selector);
 
@@ -21,20 +39,22 @@ export default class PeelrValue {
 
     if (multiple) {
       let items = [];
-
-      while ($target) {
+      while ($target && items.length < limit) {
         items.push(
           ...(await Promise.all(
             $target
+              .slice(offset, limit - items.length)
               .map(
-                async (_, el) =>
+                async (index, el) =>
                   await transform(await this.getValue($(el).first(), ctx), ctx)
               )
               .get()
           ))
         );
 
-        if (nextPage) {
+        offset = Math.max(0, offset - $target.length);
+
+        if (nextPage && items.length < limit) {
           let nextUrl = await nextPage.extract(ctx);
           if (nextUrl) {
             ctx = await ctx.derive(nextUrl);

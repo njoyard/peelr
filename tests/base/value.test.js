@@ -64,6 +64,19 @@ describe("PeelrValue", function() {
     assert.equal(await val.extract("http://localhost:8000"), "h1 text content");
   });
 
+  it("calls onRequest when making requests", async function() {
+    let log = [];
+    let val = new PeelrValue("h1", {
+      onRequest: (params, cacheHit) => log.push([params, cacheHit])
+    });
+    val.getValue = function($el) {
+      return $el.text();
+    };
+
+    await val.extract("http://localhost:8000");
+    assert.deepEqual(log, [[{ url: "http://localhost:8000" }, false]]);
+  });
+
   it("extracts from request parameters", async function() {
     let val = new PeelrValue(".header#x-my-header");
     val.getValue = function($el) {
@@ -71,7 +84,7 @@ describe("PeelrValue", function() {
     };
     assert.equal(
       await val.extract({
-        uri: "http://localhost:8000/dump",
+        url: "http://localhost:8000/dump",
         headers: { "X-My-Header": "myvalue" }
       }),
       "myvalue"
@@ -111,6 +124,65 @@ describe("PeelrValue", function() {
       "item 4",
       "item 5",
       "item 6"
+    ]);
+  });
+
+  it("slices paginated values", async function() {
+    let val = new PeelrValue(".item", {
+      multiple: true,
+      nextPage: Peelr.attr(".next", "href"),
+      offset: 1,
+      limit: 4
+    });
+    val.getValue = function($el) {
+      return $el.text();
+    };
+    assert.deepEqual(await val.extract("http://localhost:8000/page1"), [
+      "item 2",
+      "item 3",
+      "item 4",
+      "item 5"
+    ]);
+  });
+
+  it("does not run extractor for items outside sliced range", async function() {
+    let val = new PeelrValue(".item", {
+      multiple: true,
+      nextPage: Peelr.attr(".next", "href"),
+      offset: 1,
+      limit: 4
+    });
+
+    let called = [];
+    val.getValue = function($el) {
+      called.push($el.text());
+      return $el.text();
+    };
+
+    await val.extract("http://localhost:8000/page1");
+
+    assert.deepEqual(called, ["item 2", "item 3", "item 4", "item 5"]);
+  });
+
+  it("stops pagination when limit has been reached", async function() {
+    let requests = [];
+    let val = new PeelrValue(".item", {
+      multiple: true,
+      nextPage: Peelr.attr(".next", "href"),
+      offset: 1,
+      limit: 2,
+      onRequest: params => requests.push(params.url)
+    });
+
+    val.getValue = function($el) {
+      return $el.text();
+    };
+
+    await val.extract("http://localhost:8000/page1");
+
+    assert.deepEqual(requests, [
+      "http://localhost:8000/page1",
+      "http://localhost:8000/page2"
     ]);
   });
 });

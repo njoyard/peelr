@@ -62,11 +62,15 @@ options object as their last argument, which may contain the following values:
 * `multiple`: a boolean to indicate whether to extract a list of values, one for
   each matching target element, or a single value only, from the first matching
   element.  Defaults to `false`.
+* `offset` and `limit`: used when `multiple` is `true` to limit the list of
+  results returned.  Default to `0` and `Infinity`.
 * `transform`: a function to apply to extracted values before returning them.
   That function can be `async`.  When `multiple` is `true`, it will be called
   once for each value.
 * `nextPage`: used when `multiple` is `true` to
   [extract paginated data](#extracting-paginated-data), see below.
+* `onRequest`: specify an event handler when requests are made, see
+  [Logging requests](#logging-requests) below.
 
 Once defined, an extractor can be applied to HTML snippets or webpage URLs:
 
@@ -416,6 +420,29 @@ it will keep track of a few things across requests made from the same
 * Auth: the same authentication parameters are used for all requests
 * Cache: the context ensures identical GET requests are made only once
 * Base URL: used to resolve relative URLs
+
+#### Logging requests
+
+Peelr allows setting a callback to be informed when a request has been made or
+when it was avoided thanks to the cache.  You can pass that callback as a
+`onRequest` option to any extractor.  The callback will receive parameters
+passed to [request][rqst] and a boolean indicating whether that request went
+through (`false`) or was already in the cache (`true`).
+
+```js
+await Peelr.text('.item', {
+  onRequest: ({ method, url }, cacheHit) => {
+    if (cacheHit) {
+      console.log(`${method || 'GET'} ${url} hit cache`);
+    } else {
+      console.log(`${method || 'GET'} ${url} hit network`);
+    }
+  }
+}).extract(/* ... */);
+```
+
+The callback is automatically passed on to derived contexts when following
+links, submitting forms, or using pagination.
 
 #### Passing headers and other request options
 

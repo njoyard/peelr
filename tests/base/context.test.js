@@ -33,7 +33,7 @@ describe("PeelrContext", function() {
     it("returns HTML from request parameters", async function() {
       assert.equal(
         await PeelrContext.create({
-          uri: "http://localhost:8000"
+          url: "http://localhost:8000"
         }).html(),
         "<h1>h1 text content</h1>"
       );
@@ -74,7 +74,7 @@ describe("PeelrContext", function() {
     it("returns URL from request parameters", async function() {
       assert.equal(
         await PeelrContext.create({
-          uri: "http://localhost:8000"
+          url: "http://localhost:8000"
         }).url(),
         "http://localhost:8000"
       );
@@ -96,10 +96,39 @@ describe("PeelrContext", function() {
 
     it("returns cheerio instance from request parameters", async function() {
       let $ = await PeelrContext.create({
-        uri: "http://localhost:8000"
+        url: "http://localhost:8000"
       }).cheerio();
       assert.equal(typeof $, "function");
       assert.equal($("h1").text(), "h1 text content");
+    });
+  });
+
+  describe("PeelrContext.on", function() {
+    it("fires 'request' event on request", async function() {
+      let ctx = PeelrContext.create("http://localhost:8000");
+      let calls = [];
+      ctx.on("request", function() {
+        calls.push([...arguments]);
+      });
+
+      await ctx.html();
+      assert.deepEqual(calls, [[{ url: "http://localhost:8000" }, false]]);
+    });
+
+    it("includes all request parameters in 'request' event", async function() {
+      let ctx = PeelrContext.create({
+        url: "http://localhost:8000",
+        foo: "bar"
+      });
+      let calls = [];
+      ctx.on("request", function() {
+        calls.push([...arguments]);
+      });
+
+      await ctx.html();
+      assert.deepEqual(calls, [
+        [{ url: "http://localhost:8000", foo: "bar" }, false]
+      ]);
     });
   });
 
@@ -153,8 +182,7 @@ describe("PeelrContext", function() {
     it("replaces new URL and adds jar", function() {
       let ctx = PeelrContext.create("contextURL");
       let expected = {
-        uri: "newURL",
-        url: null,
+        url: "newURL",
         jar: ctx.jar
       };
 
@@ -164,7 +192,7 @@ describe("PeelrContext", function() {
         expected
       );
       assert.deepEqual(
-        ctx.deriveParams({ uri: "deriveURL" }, "newURL"),
+        ctx.deriveParams({ url: "deriveURL" }, "newURL"),
         expected
       );
     });
@@ -172,7 +200,7 @@ describe("PeelrContext", function() {
     it("keeps auth and oauth from source context", function() {
       let auth = {};
       let oauth = {};
-      let ctx = PeelrContext.create({ uri: "contextURL", auth, oauth });
+      let ctx = PeelrContext.create({ url: "contextURL", auth, oauth });
 
       assert.equal(ctx.deriveParams("deriveURL", "newURL").auth, auth);
       assert.equal(ctx.deriveParams("deriveURL", "newURL").oauth, oauth);
@@ -180,7 +208,7 @@ describe("PeelrContext", function() {
 
     it("keeps headers from source context when requested", function() {
       let ctx = PeelrContext.create({
-        uri: "contextURL",
+        url: "contextURL",
         headers: {
           "X-Foo": "foo",
           "X-Bar": "bar"
@@ -196,7 +224,7 @@ describe("PeelrContext", function() {
       );
 
       ctx = PeelrContext.create({
-        uri: "contextURL",
+        url: "contextURL",
         headers: {
           "X-Foo": "foo",
           "X-Bar": "bar"
@@ -215,8 +243,7 @@ describe("PeelrContext", function() {
       assert.deepEqual(
         ctx.deriveParams({ url: "deriveURL", foo: "bar" }, "newURL"),
         {
-          uri: "newURL",
-          url: null,
+          url: "newURL",
           foo: "bar",
           jar: ctx.jar
         }
@@ -233,7 +260,7 @@ describe("PeelrContext", function() {
 
     it("derives context from request parameters", async function() {
       let ctx = PeelrContext.create("");
-      let drv = await ctx.derive({ uri: "http://localhost:8000" });
+      let drv = await ctx.derive({ url: "http://localhost:8000" });
       assert.equal(await drv.html(), "<h1>h1 text content</h1>");
     });
 
@@ -281,6 +308,28 @@ describe("PeelrContext", function() {
           headers: { "X-Foo": "bar" }
         });
         assert.notEqual(await drv.html(), html);
+      });
+
+      it("fires 'request' event with cache hit/miss info", async function() {
+        let ctx = PeelrContext.create("http://localhost:8000/count");
+        let hits = [];
+        ctx.on("request", function(request, hit) {
+          hits.push(hit);
+        });
+        await ctx.html();
+
+        let drv1 = await ctx.derive("/count");
+        await drv1.html();
+
+        assert.ok(hits.pop());
+
+        let drv2 = await ctx.derive({
+          url: "/count",
+          headers: { "X-Foo": "bar" }
+        });
+        await drv2.html();
+
+        assert.notOk(hits.pop());
       });
     });
 
