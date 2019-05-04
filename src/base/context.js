@@ -1,3 +1,4 @@
+import EventEmitter from "events";
 import cheerio from "cheerio";
 import request from "request-promise-native";
 
@@ -9,7 +10,7 @@ function isRequestParams(url) {
   return typeof url === "object" && ("uri" in url || "url" in url);
 }
 
-export default class PeelrContext {
+export default class PeelrContext extends EventEmitter {
   static create(source) {
     if (source instanceof PeelrContext) {
       return source;
@@ -19,6 +20,8 @@ export default class PeelrContext {
   }
 
   constructor(source, cache) {
+    super();
+
     this.source = source;
     this.jar = (isRequestParams(source) && source.jar) || request.jar();
     this.keepHeaders = isRequestParams(source) && source.keepHeaders;
@@ -30,7 +33,7 @@ export default class PeelrContext {
 
     if (typeof source === "string") {
       if (isAbsoluteURL(source)) {
-        source = { uri: source };
+        source = { url: source };
       } else {
         return { html: source };
       }
@@ -41,21 +44,23 @@ export default class PeelrContext {
         .sort()
         .map(k => `${k}=${source.headers[k]}`)
         .join(" ");
-      let cacheKey = `${source.uri || source.url} ${headers}`;
+      let cacheKey = `${source.url || source.uri} ${headers}`;
       let req;
 
       if (
         (!source.method || source.method.toUpperCase() === "GET") &&
         cacheKey in cache
       ) {
+        this.emit("request", source, true);
         req = cache[cacheKey];
       } else {
+        this.emit("request", source, false);
         req = cache[cacheKey] = request(Object.assign({ jar }, source));
       }
 
       return {
         html: await req,
-        url: source.uri || source.url
+        url: source.url || source.uri
       };
     }
 
@@ -131,10 +136,14 @@ export default class PeelrContext {
       paramsChain.push(params);
     }
 
-    // Add the new URL and ensure there is no duplicate url/uri
-    paramsChain.push({ uri: deriveURL, url: null });
+    // Generate final params
+    let finalParams = Object.assign(...paramsChain);
 
-    return Object.assign(...paramsChain);
+    // Add the new URL
+    let urlParam = isRequestParams(params) && "uri" in params ? "uri" : "url";
+    finalParams[urlParam] = deriveURL;
+
+    return finalParams;
   }
 
   async deriveURL(deriveURL) {
@@ -167,11 +176,16 @@ export default class PeelrContext {
     let { cache } = this;
 
     let deriveURL = await this.deriveURL(
-      isRequestParams(params) ? params.uri || params.url : params
+      isRequestParams(params) ? params.url || params.uri : params
     );
 
     let deriveParams = this.deriveParams(params, deriveURL);
+    let derived = new PeelrContext(deriveParams, cache);
 
-    return new PeelrContext(deriveParams, cache);
+    derived.on("request", (params, cached) =>
+      this.emit("request", params, cached)
+    );
+
+    return derived;
   }
 }
