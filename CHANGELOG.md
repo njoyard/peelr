@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.1 (2019-05-04)
+
+* No new features
+* Better test coverage
+* Improved README
+
 ## v0.3.0 (2019-04-30)
 
 * Fixed cookie jar passed to `extract` being overwritten
