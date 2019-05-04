@@ -37,6 +37,22 @@ describe("PeelrContext", function() {
         }).html(),
         "<h1>h1 text content</h1>"
       );
+
+      assert.equal(
+        await PeelrContext.create({
+          url: "http://localhost:8000"
+        }).html(),
+        "<h1>h1 text content</h1>"
+      );
+    });
+
+    it("throws error from unrecognized source", async function() {
+      try {
+        await PeelrContext.create({}).html();
+        assert.notOk(true);
+      } catch (e) {
+        assert.include(e.message, "Cannot extract HTML");
+      }
     });
   });
 
@@ -120,6 +136,16 @@ describe("PeelrContext", function() {
         await ctx.deriveURL("foo"),
         "http://localhost:8000/details/foo"
       );
+    });
+
+    it("fails to resolve relative URL without base or url", async function() {
+      let ctx = PeelrContext.create("<div></div>");
+      try {
+        await ctx.deriveURL("foo");
+        assert.notOk(true);
+      } catch (e) {
+        assert.include(e.message, "Cannot resolve relative URL");
+      }
     });
   });
 
