@@ -39,11 +39,11 @@ export default class PeelrValue {
 
     if (multiple) {
       let items = [];
-
-      while ($target && items.length < offset + limit) {
+      while ($target && items.length < limit) {
         items.push(
           ...(await Promise.all(
             $target
+              .slice(offset, limit - items.length)
               .map(
                 async (index, el) =>
                   await transform(await this.getValue($(el).first(), ctx), ctx)
@@ -52,7 +52,9 @@ export default class PeelrValue {
           ))
         );
 
-        if (nextPage) {
+        offset = Math.max(0, offset - $target.length);
+
+        if (nextPage && items.length < limit) {
           let nextUrl = await nextPage.extract(ctx);
           if (nextUrl) {
             ctx = await ctx.derive(nextUrl);
@@ -66,7 +68,7 @@ export default class PeelrValue {
         }
       }
 
-      return items.slice(offset, offset + limit);
+      return items;
     } else if ($target.length) {
       return await transform(await this.getValue($target.first(), ctx), ctx);
     }

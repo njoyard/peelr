@@ -144,4 +144,45 @@ describe("PeelrValue", function() {
       "item 5"
     ]);
   });
+
+  it("does not run extractor for items outside sliced range", async function() {
+    let val = new PeelrValue(".item", {
+      multiple: true,
+      nextPage: Peelr.attr(".next", "href"),
+      offset: 1,
+      limit: 4
+    });
+
+    let called = [];
+    val.getValue = function($el) {
+      called.push($el.text());
+      return $el.text();
+    };
+
+    await val.extract("http://localhost:8000/page1");
+
+    assert.deepEqual(called, ["item 2", "item 3", "item 4", "item 5"]);
+  });
+
+  it("stops pagination when limit has been reached", async function() {
+    let requests = [];
+    let val = new PeelrValue(".item", {
+      multiple: true,
+      nextPage: Peelr.attr(".next", "href"),
+      offset: 1,
+      limit: 2,
+      onRequest: params => requests.push(params.url)
+    });
+
+    val.getValue = function($el) {
+      return $el.text();
+    };
+
+    await val.extract("http://localhost:8000/page1");
+
+    assert.deepEqual(requests, [
+      "http://localhost:8000/page1",
+      "http://localhost:8000/page2"
+    ]);
+  });
 });
