@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.1 (2019-05-04)
+
+* No changes, ref fix release
+
 ## v0.4.0 (2019-05-04)
 
 * Added `onRequest` callback
