@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.4.0 (2019-05-04)
 
 * Added `onRequest` callback
 * Added `offset` and `limit` parameters when using `multiple`
