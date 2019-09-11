@@ -8,18 +8,20 @@ export default class PeelrList extends PeelrValue {
 
   async getValue($selection, ctx) {
     let { list } = this;
-    let $ = await ctx.cheerio();
 
     return await Promise.all(
-      list.map(
-        async val =>
-          await val.transform(
-            val.selector === "::root"
-              ? await val.getValue($selection, ctx)
-              : await val.getValue($(val.selector, $selection), ctx),
-            ctx
-          )
-      )
+      list.map(async val => {
+        val.stack = this.valueStack;
+        let matches = await val.findElements(ctx, $selection);
+
+        if (val.multiple) {
+          return await Promise.all(
+            matches.map(el => val.getElementValue(el, ctx))
+          );
+        } else if (matches) {
+          return await val.getElementValue(matches, ctx);
+        }
+      })
     );
   }
 }

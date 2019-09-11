@@ -185,4 +185,112 @@ describe("PeelrValue", function() {
       "http://localhost:8000/page2"
     ]);
   });
+
+  it("calls onExtract when extracting data (single)", async function() {
+    let log = []
+    let val = new PeelrValue("h1", {
+      onExtract: (params) => log.push(params)
+    });
+    val.getValue = function($el) {
+      return $el.text();
+    };
+
+    await val.extract("http://localhost:8000");
+    assert.deepEqual(log, [{
+      found: 1,
+      multiple: false,
+      selector: "h1",
+      stack: ["Peelr.value(h1)"],
+      url: "http://localhost:8000"
+    }]);
+  });
+
+  it("calls onExtract when extracting data (multiple)", async function() {
+    let log = []
+    let val = new PeelrValue(".item", {
+      onExtract: (params) => log.push(params),
+      multiple: true
+    });
+    val.getValue = function($el) {
+      return $el.text();
+    };
+
+    await val.extract("http://localhost:8000/page1");
+    assert.deepEqual(log, [{
+      found: 2,
+      multiple: true,
+      selector: ".item",
+      stack: ["Peelr.value*(.item)"],
+      url: "http://localhost:8000/page1"
+    }]);
+  });
+
+  it("calls onExtract when extracting data (nested)", async function() {
+    let log = []
+    let val = new PeelrValue("h1", {
+      onExtract: (params) => log.push(params)
+    });
+    val.stack = ["my", "nested", "stack"];
+    val.getValue = function($el) {
+      return $el.text();
+    };
+
+    await val.extract("http://localhost:8000");
+    assert.deepEqual(log, [{
+      found: 1,
+      multiple: false,
+      selector: "h1",
+      stack: ["my", "nested", "stack", "Peelr.value(h1)"],
+      url: "http://localhost:8000"
+    }]);
+  })
+
+  it("calls onExtract when extracting data (paginated)", async function() {
+    let log = []
+    let val = new PeelrValue(".item", {
+      onExtract: (params) => log.push(params),
+      multiple: true,
+      nextPage: ".next"
+    });
+    val.getValue = function($el) {
+      return $el.text();
+    };
+
+    await val.extract("http://localhost:8000/page1");
+    assert.deepEqual(log, [
+      {
+        found: 1,
+        multiple: false,
+        selector: ".next",
+        stack: ["Peelr.value*(.item)", "Peelr.attr(.next)"],
+        url: "http://localhost:8000/page1"
+      },
+      {
+        found: 1,
+        multiple: false,
+        selector: ".next",
+        stack: ["Peelr.value*(.item)", "Peelr.attr(.next)"],
+        url: "http://localhost:8000/page2"
+      },
+      {
+        found: 0,
+        multiple: false,
+        selector: ".next",
+        stack: ["Peelr.value*(.item)", "Peelr.attr(.next)"],
+        url: "http://localhost:8000/page3"
+      },
+      {
+        found: 6,
+        multiple: true,
+        selector: ".item",
+        stack: ["Peelr.value*(.item)"],
+        url: "http://localhost:8000/page1",
+        pages: [
+          "http://localhost:8000/page1",
+          "http://localhost:8000/page2",
+          "http://localhost:8000/page3"
+        ]
+      }
+    ]);
+  });
 });
