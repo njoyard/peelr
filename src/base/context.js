@@ -10,6 +10,10 @@ function isRequestParams(url) {
   return typeof url === "object" && ("uri" in url || "url" in url);
 }
 
+const defaultRequestParams = {
+  followAllRedirects: true
+};
+
 export default class PeelrContext extends EventEmitter {
   static create(source) {
     if (source instanceof PeelrContext) {
@@ -55,7 +59,9 @@ export default class PeelrContext extends EventEmitter {
         req = cache[cacheKey];
       } else {
         this.emit("request", source, false);
-        req = cache[cacheKey] = request(Object.assign({ jar }, source));
+        req = cache[cacheKey] = request(
+          Object.assign({ jar }, defaultRequestParams, source)
+        );
       }
 
       return {
