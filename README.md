@@ -14,7 +14,7 @@ await Peelr.hash(
   {
     title: Peelr.text('.story-title > a'),
     link: Peelr.attr('.story-title > a', 'href'),
-    comments: Peelr.text('.comment-bubble a', { transform: n => Number(n) }),
+    commentCount: Peelr.text('.comment-bubble a', { transform: n => Number(n) }),
     time: Peelr.attr('.story-byline time', 'datetime'),
     source: Peelr.attr('.story-sourcelnk', 'href'),
     text: Peelr.html('.body .p', { transform: t => t.trim() }),
@@ -164,7 +164,7 @@ A quick example:
 ```js
 await Peelr.list(
   '.item',
-  [Peelr.text('.description'), Peelr.text('.price')],  
+  [Peelr.text('.description'), Peelr.text('.price')],
 ).extract(`
   <div class="item">
     <span class="description">Item 1</span>
@@ -361,7 +361,7 @@ Similarly, `Peelr.form` can be used to submit a form and extract data from the
 target page:
 
 ```js
-await Peelr.link('form.login', Peelr.text('h1'), {
+await Peelr.form('form.login', Peelr.text('h1'), {
   fields: {
     '[name="user"]': "john",
     '[name="password"]': "hunter3"
@@ -443,6 +443,29 @@ await Peelr.text('.item', {
 
 The callback is automatically passed on to derived contexts when following
 links, submitting forms, or using pagination.
+
+#### Logging extractions
+
+You can also define a callback to help debugging when the extraction result
+does not match what you expect.
+
+```js
+await Peelr.text('.item', {
+  onExtract: ({ url, selector, found }) => {
+    console.log(`Found ${found} elements matching ${selector} on page ${url}`)
+  }
+}).extract(/* ... */);
+```
+
+The following properties are passed in the parameter object:
+- `url`: the url where extraction was done (or began, when using pagination)
+- `selector`: the selector searched
+- `found`: the number of matching elements found. When not using the `multiple`
+  option, will always be 0 or 1 even when more matching elements are present.
+- `multiple`: `true` when using the `multiple` option
+- `pages`: list of page URLs browsed when using pagination
+- `stack`: an array describing the stack of nested extractors, when applicable
+  (using `link`, `form`, `hash` or `list` for example).
 
 #### Passing headers and other request options
 

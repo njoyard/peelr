@@ -4,7 +4,7 @@ import Peelr from "../../src";
 
 describe("Peelr.hash", function() {
   let html = `
-    <p>
+    <div class="root">
       <div class="mycls" foo="bar">
         <span class="field1">field 1 value</span>
         <span class="field2" foo="field 2 value"></span>
@@ -13,7 +13,7 @@ describe("Peelr.hash", function() {
         <span class="field1">second field 1 value</span>
         <span class="field2" foo="second field 2 value"></span>
       </div>
-    </p>
+    </div>
   `;
 
   it("extracts hash", async function() {
@@ -98,6 +98,28 @@ describe("Peelr.hash", function() {
         })
       }).extract(html),
       { sub: { text: "field 1 value" } }
+    );
+  });
+
+  it("extracts recursively with nested multiple", async function() {
+    assert.deepEqual(
+      await Peelr.hash(
+        ".root",
+        {
+          items: Peelr.hash(
+            ".mycls",
+            {
+              field1: Peelr.text(".field1")
+            },
+            {
+              multiple: true
+            }
+          )
+        }
+      ).extract(html),
+      {
+        items: [{ field1: "field 1 value" }, { field1: "second field 1 value" }]
+      }
     );
   });
 
